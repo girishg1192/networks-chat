@@ -12,7 +12,7 @@
 
 int create_socket(struct addrinfo **servinfo_, char* host, char* port);
 void fill_addrinfo(struct addrinfo *);
-void get_host_name(int sockfd);
+void get_host_name(int sockfd, char* ip);
 
 int inet_pton(int, char*, void*);
 int inet_ntop(int, void*, char*, int);

@@ -11,7 +11,7 @@ int create_socket(struct addrinfo **servinfo_, char* host, char *port)
   return sockfd;
 }
 
-void get_host_name(int sockfd)
+void get_host_name(int sockfd, char *ip)
 {
   struct sockaddr_storage connected_server;
   socklen_t len = sizeof(connected_server);
@@ -30,6 +30,10 @@ void get_host_name(int sockfd)
   */
   inet_ntop(AF_INET, &in->sin_addr, ipstr, sizeof(ipstr));
   printf("%s:[%d]\n", ipstr, ntohs(in->sin_port));
+
+  //well, Don't copy to a null argument.
+  if(ip!=NULL)
+    strcpy(ip, ipstr);
 }
 void fill_addrinfo(struct addrinfo *info)
 {

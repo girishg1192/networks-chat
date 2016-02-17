@@ -36,6 +36,7 @@ int parse_shell();
 void get_ip();
 void add_fd(int newfd);
 int active_sockets=1;
+bool is_server = false;
 
 int main(int argc, char **argv)
 {
@@ -43,7 +44,6 @@ int main(int argc, char **argv)
   char ip_addr[INET_ADDRSTRLEN];
   char *service;
   int server_sock = -1;
-  bool is_server = false;
   int exit_flag = 0;
 
   fd_set temp;
@@ -147,11 +147,10 @@ int parse_shell()
   }
   if(!strcmp("LOGIN", command))
   {
-    if(!(is_client_connected || argc!=2))
+    if(!is_server && !(is_client_connected || argc!=2))
     {
       printf("Connecting to server %s %s\n", argv[0], argv[1]);
       int newfd = client_connect(argv[0], argv[1]);
-      printf(" %d\n", newfd);
       if(newfd<=1)
       {
         printf("[%s:ERROR]\n", command);

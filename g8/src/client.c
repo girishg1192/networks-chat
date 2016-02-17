@@ -8,17 +8,20 @@ int client_connect(char *host, char *port)
   printf("Connect to %s[%s]\n", host, port);
   int sockfd = create_socket(&servinfo, host, port);
   connect(sockfd, servinfo->ai_addr, servinfo->ai_addrlen);
-  get_host_name(sockfd);
+  get_host_name(sockfd, NULL);
   freeaddrinfo(servinfo);
   //client_send(sockfd);
   return sockfd;
 }
 void client_identify(int fd)
 {
-  char port[6];
-  sprintf(port, "%d", get_listening_port());
-  printf("%s\n", port);
-  client_send(fd, port);
+  char command[132];
+  char host_name[128];
+  gethostname(host_name, 128);
+  printf("%s\n", host_name);
+  sprintf(command, "%d %s", get_listening_port(), host_name);
+  printf("%s\n", command);
+  client_send(fd, command);
 }
 void client_send(int sockfd, char *buf)
 {
