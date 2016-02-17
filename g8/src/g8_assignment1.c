@@ -106,9 +106,8 @@ int main(int argc, char **argv)
       }
     }
   }
-
   server_kill(sock);
-  fclose(fopen(LOGFILE, "w"));
+  //fclose(fopen(LOGFILE, "w"));
   return 0;
 }
 int parse_shell()
@@ -196,7 +195,7 @@ void get_ip()
   socklen_t len = sizeof(connected_server);
   char ipstr[INET_ADDRSTRLEN];
 
-  int ip_sock = create_socket(&servinfo, "8.8.8.8", "80");
+  int ip_sock = create_socket(&servinfo, "www.google.com", "80");
   connect(ip_sock, servinfo->ai_addr, servinfo->ai_addrlen);
   freeaddrinfo(servinfo);
 
