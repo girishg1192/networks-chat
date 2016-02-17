@@ -192,12 +192,18 @@ int parse_shell()
 void get_ip()
 {
   struct sockaddr_storage connected_server;
+  struct addrinfo *servinfo;
   socklen_t len = sizeof(connected_server);
   char ipstr[INET_ADDRSTRLEN];
 
-  int ip_sock = client_connect("www.facebook.com", "80");
+  int ip_sock = create_socket(&servinfo, "8.8.8.8", "80");
+  connect(ip_sock, servinfo->ai_addr, servinfo->ai_addrlen);
+  freeaddrinfo(servinfo);
+
   getsockname(ip_sock, (struct sockaddr*)&connected_server, &len);
   struct sockaddr_in *in = (struct sockaddr_in *)&connected_server;
   inet_ntop(AF_INET, &in->sin_addr, ipstr, sizeof(ipstr));
+
+  close(ip_sock);
   printf("%s\n", ipstr);
 }
