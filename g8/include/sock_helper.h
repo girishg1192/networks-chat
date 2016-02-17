@@ -17,5 +17,21 @@ void get_host_name(int sockfd);
 int inet_pton(int, char*, void*);
 int inet_ntop(int, void*, char*, int);
 
+void set_listening_port(char *port_);
+int get_listening_port();
+
+/*
+ * Print success/failure of command invocation
+ */
+void print_success(int status, char *command);
+
+/*
+ * FD SET Helper functions!
+ */
+void add_fd(int newfd);
+void clear_fd(int oldfd);
+
 fd_set wait_fd;
 struct timeval tv;
+int port;
+int active_sockets;

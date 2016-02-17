@@ -7,20 +7,23 @@ int client_connect(char *host, char *port)
   //Create a socket
   printf("Connect to %s[%s]\n", host, port);
   int sockfd = create_socket(&servinfo, host, port);
-  printf("fd? %d\n", sockfd);
   connect(sockfd, servinfo->ai_addr, servinfo->ai_addrlen);
   get_host_name(sockfd);
   freeaddrinfo(servinfo);
   //client_send(sockfd);
   return sockfd;
 }
+void client_identify(int fd)
+{
+  char port[6];
+  sprintf(port, "%d", get_listening_port());
+  printf("%s\n", port);
+  client_send(fd, port);
+}
 void client_send(int sockfd, char *buf)
 {
-  int ret, i=0;
-  //sprintf(msg, "Server %d\n", i);
-  //printf("%s\n", msg);
+  int ret;
   ret = send(sockfd, buf, strlen(buf), 0);
-  i++;
 }
 void client_close(int sockfd)
 {

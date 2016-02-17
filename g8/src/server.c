@@ -33,8 +33,6 @@ int server_accept(int sockfd)
   {
   }while(ret);
   */
-
-  printf("%d newfd?\n", newfd);
   return newfd;
 }
 void server_receive(int sockfd)
@@ -42,14 +40,20 @@ void server_receive(int sockfd)
   char msg[255];//= "Server!!\0";
   int ret, i=0;
   ret = recv(sockfd, msg, 256, 0);
-  if(ret>=0)
+  if(ret>0)
   {
     get_host_name(sockfd);
     msg[ret]='\0';
     printf("%s %d\n", msg, ret);
   }
+  if(ret == 0)
+  {
+  //  printf("Connection closed\n");
+    server_kill(sockfd);
+  }
 }
 void server_kill(int sockfd)
 {
   close(sockfd);
+  clear_fd(sockfd);
 }

@@ -5,6 +5,7 @@ int server_start(char *port);
 
 int server_accept(int sockfd);
 void server_receive(int sockfd);
+void server_kill(int sockfd);
 
 fd_set wait_fd;
 struct timeval tv;

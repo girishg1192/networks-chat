@@ -33,8 +33,9 @@ int getaddrinfo(const char *node, // e.g. "www.example.com" or IP
 //int bind(int sockfd, struct sockaddr *my_addr, int addrlen);
 void fill_addrinfo(struct addrinfo *info);
 int parse_shell();
+void get_ip();
 void add_fd(int newfd);
-int active_sockets=1; 
+int active_sockets=1;
 
 int main(int argc, char **argv)
 {
@@ -47,8 +48,8 @@ int main(int argc, char **argv)
 
   fd_set temp;
 
-	/*Init. Logger*/
-	//cse4589_init_log(argv[2]);
+  /*Init. Logger*/
+  //cse4589_init_log(argv[2]);
 
   int sock;
   if(argc<3)
@@ -65,33 +66,32 @@ int main(int argc, char **argv)
 
   if(!strcmp(argv[1], "s"))
   {
-    server_sock = server_start(argv[2]);
-    if(server_sock <=0)return 0;
-    sock = server_sock;
     is_server = true;
-    add_fd(sock);
   }
   else if(strcmp(argv[1], "c"))
   {
     printf("Usage ./sock [s/c]\n");
     return 0;
   }
+  set_listening_port(argv[2]);
+  server_sock = server_start(argv[2]);
+  if(server_sock <=0)return 0;
+  sock = server_sock;
+  add_fd(sock);
 
-//  printf("socket %d %d for %s\n", active_sockets, sock, argv[1]);
+  //  printf("socket %d %d for %s\n", active_sockets, sock, argv[1]);
   int i =2;
   while(i && ! exit_flag)
   {
     temp = wait_fd;
-    printf("Active sockets = %d\n", active_sockets);
     int ret = select(active_sockets, &temp, NULL, NULL, NULL);
     if(ret)
     {
       if(FD_ISSET(STDIN, &temp))
       {
-        printf("stdin\n");
         exit_flag = parse_shell();
       }
-      if(is_server && FD_ISSET(server_sock, &temp))
+      if(FD_ISSET(server_sock, &temp) && is_server)
       {
         // server socket is active, check for new connections
         int new_socket = server_accept(server_sock);
@@ -101,7 +101,6 @@ int main(int argc, char **argv)
       {
         if(FD_ISSET(fd, &temp))
         {
-          printf("%d, socket\n", fd);
           server_receive(fd);
         }
       }
@@ -109,22 +108,39 @@ int main(int argc, char **argv)
   }
 
   server_kill(sock);
-	fclose(fopen(LOGFILE, "w"));
+  fclose(fopen(LOGFILE, "w"));
   return 0;
 }
 int parse_shell()
 {
   char shell_input[255];
-  char *temp;
   static bool is_client_connected = false;
+  int ret = 0;
+  static int server_sock;
+
+  /*
+   * Get the input
+   */
   fgets(shell_input, 255, stdin);
   if(strlen(shell_input) <= 1)
     return 0;
   shell_input[strlen(shell_input)-1] = '\0';
+
+  /*
+   * Tokenize the strings
+   */
   char *arg;
   int argc = 0;
   char argv[4][255];
+  char *temp;
   char *command = strtok_r(shell_input, " ", &temp);
+  if(!strcmp("SEND", command))
+  {
+    if(!is_client_connected)
+      print_success(0,command);
+    else
+      client_send(server_sock, temp);
+  }
   for(arg = strtok_r(NULL, " ", &temp); arg; arg = strtok_r(NULL, " ", &temp))
   {
     strcpy(argv[argc], arg);
@@ -132,11 +148,7 @@ int parse_shell()
   }
   if(!strcmp("LOGIN", command))
   {
-    if(is_client_connected || argc!=2)
-    {
-      printf("[%s:ERROR]\n", command);
-    }
-    else
+    if(!(is_client_connected || argc!=2))
     {
       printf("Connecting to server %s %s\n", argv[0], argv[1]);
       int newfd = client_connect(argv[0], argv[1]);
@@ -147,18 +159,45 @@ int parse_shell()
         return 0;
       }
       is_client_connected = true;
+      client_identify(newfd);
       add_fd(newfd);
+      server_sock = newfd;
+      print_success(1, command);
     }
+    else
+      print_success(0, command);
   }
   if(!strcmp("EXIT", command))
   {
     return 1;
   }
+  if(!strcmp("AUTHOR", command))
+  {
+    print_success(1, command);
+    printf("I, g8, have read and understood the course academic integrity policy.\n");
+  }
+  if(!strcmp("PORT", command))
+  {
+    print_success(1, command);
+    printf("PORT:%d\n", get_listening_port());
+  }
+  if(!strcmp("IP", command))
+  {
+    print_success(1, command);
+    get_ip();
+  }
   printf("[%s:END]\n", command);
   return 0;
 }
-void add_fd(int newfd)
+void get_ip()
 {
-  FD_SET(newfd, &wait_fd);
-  if(newfd >=active_sockets) active_sockets = newfd+1;
+  struct sockaddr_storage connected_server;
+  socklen_t len = sizeof(connected_server);
+  char ipstr[INET_ADDRSTRLEN];
+
+  int ip_sock = client_connect("www.facebook.com", "80");
+  getsockname(ip_sock, (struct sockaddr*)&connected_server, &len);
+  struct sockaddr_in *in = (struct sockaddr_in *)&connected_server;
+  inet_ntop(AF_INET, &in->sin_addr, ipstr, sizeof(ipstr));
+  printf("%s\n", ipstr);
 }

@@ -29,8 +29,7 @@ void get_host_name(int sockfd)
   getnameinfo(&strt, sizeof strt, host, 1024, service, 1024, 0);
   */
   inet_ntop(AF_INET, &in->sin_addr, ipstr, sizeof(ipstr));
-  printf("%s:%s:[%d]\n", ipstr, host, ntohs(in->sin_port));
-  printf("%s\n", service);
+  printf("%s:[%d]\n", ipstr, ntohs(in->sin_port));
 }
 void fill_addrinfo(struct addrinfo *info)
 {
@@ -43,4 +42,32 @@ void fill_addrinfo(struct addrinfo *info)
   info->ai_family = AF_INET;
   info->ai_socktype = SOCK_STREAM;
   //info->ai_flags = AI_PASSIVE; //Fill with my IP
+}
+void set_listening_port(char *port_)
+{
+  char *end;
+  port = strtol(port_, &end, 10);
+}
+int get_listening_port()
+{
+  return port;
+}
+void print_success(int ret, char *command)
+{
+  if(ret)
+    printf("[%s:SUCCESS]\n", command);
+  else
+    printf("[%s:ERROR]\n", command);
+}
+
+/* FDSET operators
+ */
+void add_fd(int newfd)
+{
+  FD_SET(newfd, &wait_fd);
+  if(newfd >=active_sockets) active_sockets = newfd+1;
+}
+void clear_fd(int oldfd)
+{
+  FD_CLR(oldfd, &wait_fd);
 }
