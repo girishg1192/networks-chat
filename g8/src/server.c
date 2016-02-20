@@ -6,6 +6,7 @@ void add_client(int fd, char *hostname);
 int close(int);
 struct client_info* find_client_by_fd(int fd);
 void print_client(struct client_info *print);
+void server_send_list(int sockfd);
 
 int server_start(char *port)
 {
@@ -18,7 +19,6 @@ int server_start(char *port)
 
   //Do server stuff
   //err = bind(sockfd, servinfo->ai_addr, servinfo->ai_addrlen);
-  
   struct sockaddr_in in;
   bzero(&in, sizeof(in));
   char *end;
@@ -52,7 +52,6 @@ void add_client(int newfd, char *host_name)
   /* Parse the data sent from the client
    */
   get_host_name(newfd, host_name);
-
   /*
    * create a client_info structure
    */
@@ -77,6 +76,7 @@ void add_info_to_client(char *args, int fd, struct client_info *connection)
   connection->port = strtol(client_auth[0], &end, 10);
   strcpy(connection->hostname, client_auth[1]);
   print_client(connection);
+  server_send_list(fd);
 }
 void server_receive(int sockfd)
 {
@@ -94,7 +94,6 @@ void server_receive(int sockfd)
   }
   if(ret == 0)
   {
-  //  printf("Connection closed\n");
     server_kill(sockfd);
   }
 }
@@ -122,3 +121,37 @@ void print_client(struct client_info *print)
 {
   printf("%d %s %s\n", print->port, print->ip_addr, print->hostname);
 }
+void server_send_list(int sockfd)
+{
+  int ret;
+  char buf[256];
+  memset(buf, 0, 256);
+
+  struct client_info* tmp;
+  for(struct list_elem *iter = list_begin(&client_list); iter!=list_end(&client_list);
+      iter = list_next(iter))
+  {
+    printf("Sending list\n");
+    tmp = list_entry(iter, struct client_info, elem);
+    sprintf(buf, "LIST %d %s %s", tmp->port, tmp->hostname, tmp->ip_addr);
+    printf("%s\n", buf);
+    ret = send(sockfd, buf, strlen(buf), 0);
+    memset(buf, 0, 256);
+  }
+}
+struct client_info* find_client_by_ip(char *ip)
+{
+  struct client_info* find_client;
+  for(struct list_elem *iter = list_begin(&client_list); iter!=list_end(&client_list);
+      iter = list_next(iter))
+  {
+    find_client = list_entry(iter, struct client_info, elem);
+    //printf("Loop 1 %d %d\n", find_client->sockfd, fd);
+    if(!strcmp(find_client->ip_addr,ip))
+      return find_client;
+    //printf("next\n");
+  }
+  //Nothing found
+  return NULL;
+}
+

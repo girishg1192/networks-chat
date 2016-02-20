@@ -101,7 +101,10 @@ int main(int argc, char **argv)
       {
         if(FD_ISSET(fd, &temp))
         {
-          server_receive(fd);
+          if(is_server)
+            server_receive(fd);
+          else
+            client_receive(fd);
         }
       }
     }
@@ -157,8 +160,8 @@ int parse_shell()
         return 0;
       }
       is_client_connected = true;
-      client_identify(newfd);
       add_fd(newfd);
+      client_identify(newfd);
       server_sock = newfd;
       print_success(1, command);
     }
@@ -191,6 +194,11 @@ int parse_shell()
   {
     print_success(1, command);
     get_ip();
+  }
+  if(!strcmp("LIST", command))
+  {
+    print_success(1, command);
+    print_client_list();
   }
   printf("[%s:END]\n", command);
   return 0;
