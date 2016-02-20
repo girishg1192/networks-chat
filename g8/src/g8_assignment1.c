@@ -169,6 +169,14 @@ int parse_shell()
   {
     return 1;
   }
+  else if(!strcmp("LOGOUT", command))
+  {
+    close(server_sock);
+    clear_fd(server_sock);
+    is_client_connected  = false;
+    server_sock = -1;
+    print_success(1, command);
+  }
   if(!strcmp("AUTHOR", command))
   {
     print_success(1, command);

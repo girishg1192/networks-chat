@@ -29,11 +29,11 @@ void get_host_name(int sockfd, char *ip)
   getnameinfo(&strt, sizeof strt, host, 1024, service, 1024, 0);
   */
   inet_ntop(AF_INET, &in->sin_addr, ipstr, sizeof(ipstr));
-  printf("%s:[%d]\n", ipstr, ntohs(in->sin_port));
-
   //well, Don't copy to a null argument.
   if(ip!=NULL)
     strcpy(ip, ipstr);
+  else
+    printf("%s:[%d]\n", ipstr, ntohs(in->sin_port));
 }
 void fill_addrinfo(struct addrinfo *info)
 {
