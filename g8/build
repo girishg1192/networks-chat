@@ -1,0 +1,4 @@
+make
+scp -r * g8@highgate.cse.buffalo.edu:/local/Spring_2016/g8/networks-chat/g8/
+scp -r * g8@euston.cse.buffalo.edu:/local/Spring_2016/g8/networks-chat/g8/
+scp -r * g8@underground.cse.buffalo.edu:/local/Spring_2016/g8/networks-chat/g8/
