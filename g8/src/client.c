@@ -5,6 +5,8 @@ void client_fill_list();
 void bind_client(int);
 bool verify_ip(char *ip);
 void print_clients(struct client_logged *print);
+struct client_logged* find_client_ip_port(char *ip, int port);
+void clear_list();
 
 int client_connect(char *host, char *port)
 {
@@ -67,6 +69,11 @@ void client_receive(int sockfd)
     {
       printf("[EVENT]%s\n", temp);
     }
+    else if(!strcmp(command, "REFRESH"))
+    {
+      printf("clear all data\n");
+      clear_list();
+    }
   }
   if(ret == 0)
   {
@@ -90,8 +97,9 @@ void client_fill_list(char *id)
   }
   printf("parsed %s %s %s\n", argv[0], argv[1], argv[2]);
   //TODO SEGFAULTS!!!!
+  int set_port = strtol(argv[0], &end, 10);
   struct client_logged *add_client = malloc(sizeof(struct client_logged));
-  add_client->port = strtol(argv[0], &end, 10);
+  add_client->port = set_port;
   memset(add_client->hostname, 0, sizeof(add_client->hostname));
   strcpy(add_client->hostname, argv[1]);
   memset(add_client->ip_addr, 0, sizeof(add_client->ip_addr));
@@ -142,4 +150,26 @@ bool verify_ip(char *ip)
 void print_clients(struct client_logged *print)
 {
   printf("%d %s %s\n", print->port, print->ip_addr, print->hostname);
+}
+struct client_logged* find_client_ip_port(char *ip, int port)
+{
+  struct client_logged* find_client;
+  for(struct list_elem *iter = list_begin(&connected_list); iter!=list_end(&connected_list);
+      iter = list_next(iter))
+  {
+    find_client = list_entry(iter, struct client_logged, elem);
+    //printf("Loop 1 %d %d\n", find_client->sockfd, fd);
+    if(!strcmp(find_client->ip_addr,ip) && (port == find_client->port))
+      return find_client;
+  }
+  return NULL;
+}
+void clear_list()
+{
+  while(!list_empty(&connected_list))
+  {
+    struct list_elem *e = list_pop_front(&connected_list);
+    struct client_logged *free_node = list_entry(e, struct client_logged, elem);
+    free(free_node);
+  }
 }

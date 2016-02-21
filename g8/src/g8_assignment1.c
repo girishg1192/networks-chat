@@ -116,6 +116,7 @@ int main(int argc, char **argv)
 int parse_shell()
 {
   char shell_input[255];
+  char message[255];
   static bool is_client_connected = false;
   int ret = 0;
   static int server_sock;
@@ -127,6 +128,7 @@ int parse_shell()
   if(strlen(shell_input) <= 1)
     return 0;
   shell_input[strlen(shell_input)-1] = '\0';
+  strcpy(message, shell_input);
 
   /*
    * Tokenize the strings
@@ -175,11 +177,16 @@ int parse_shell()
   }
   else if(!strcmp("LOGOUT", command))
   {
-    close(server_sock);
-    clear_fd(server_sock);
-    is_client_connected  = false;
-    server_sock = -1;
-    print_success(1, command);
+    if(is_client_connected)
+    {
+      close(server_sock);
+      clear_fd(server_sock);
+      is_client_connected  = false;
+      server_sock = -1;
+      print_success(1, command);
+    }
+    else
+      print_success(0, command);
   }
   if(!strcmp("AUTHOR", command))
   {
@@ -200,6 +207,20 @@ int parse_shell()
   {
     print_success(1, command);
     print_client_list();
+  }
+  else if(!strcmp("REFRESH", command))
+  {
+    client_send(server_sock, command);
+    print_success(1, command);
+  }
+  else if(!strcmp("BROADCAST", command))
+  {
+    if(argc)
+    {
+      client_send(server_sock, message);
+      print_success(1, command);
+    }
+    else print_success(0, command);
   }
   printf("[%s:END]\n", command);
   return 0;
