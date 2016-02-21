@@ -136,12 +136,13 @@ int parse_shell()
   char argv[4][255];
   char *temp;
   char *command = strtok_r(shell_input, " ", &temp);
+  //TODO reorder all commands!!
   if(!strcmp("SEND", command))
   {
     if(!is_client_connected)
       print_success(0,command);
     else
-      client_send(server_sock, temp);
+      print_success(client_send_msg(server_sock, temp), command);
   }
   for(arg = strtok_r(NULL, " ", &temp); arg; arg = strtok_r(NULL, " ", &temp))
   {

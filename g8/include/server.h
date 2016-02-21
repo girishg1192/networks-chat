@@ -17,7 +17,11 @@ struct client_info
   int sockfd;
   char ip_addr[INET_ADDRSTRLEN];
   char hostname[128];
+
   bool is_connected;
+  int sent_msg;
+  int recv_msg;
+
   struct list_elem elem;
 };
 

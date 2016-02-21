@@ -5,7 +5,7 @@
 #include "list.h"
 
 int client_connect(char *host, char *port);
-void client_send(int sockfd, char *message);
+int client_send(int sockfd, char *message);
 void client_identify(int fd);
 void client_receive(int fd);
 void client_kill(int fd);

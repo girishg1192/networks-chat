@@ -2,12 +2,16 @@
 
 struct list connected_list;
 void client_fill_list();
+void bind_client(int);
+bool verify_ip(char *ip);
+void print_clients(struct client_logged *print);
 
 int client_connect(char *host, char *port)
 {
   struct addrinfo *servinfo; // will point to the results
   //Create a socket
   int sockfd = create_socket(&servinfo, host, port);
+  bind_client(sockfd);
   connect(sockfd, servinfo->ai_addr, servinfo->ai_addrlen);
   get_host_name(sockfd, NULL);
   freeaddrinfo(servinfo);
@@ -19,14 +23,26 @@ void client_identify(int fd)
   char command[132];
   char host_name[128];
   gethostname(host_name, 128);
-  sprintf(command, "%d %s", get_listening_port(), host_name);
+  sprintf(command, "LOGIN %d %s", get_listening_port(), host_name);
   printf("%s\n", command);
   client_send(fd, command);
 }
-void client_send(int sockfd, char *buf)
+int client_send(int sockfd, char *buf)
+{
+  return send(sockfd, buf, strlen(buf), 0);
+}
+int client_send_msg(int sockfd, char *buf)
 {
   int ret;
-  ret = send(sockfd, buf, strlen(buf), 0);
+  char msg[256];
+  //strcpy(msg, buf);
+  char *tmp;
+  char *ip = strtok_r(buf, " ", &tmp);
+  if(!verify_ip(ip))
+    return 0;
+  sprintf(msg, "SEND %s %s",ip, tmp);
+  ret = send(sockfd, msg, strlen(msg), 0);
+  return ret;
 }
 void client_close(int sockfd)
 {
@@ -73,12 +89,17 @@ void client_fill_list(char *id)
     strcpy(argv[argc++], arg);
   }
   printf("parsed %s %s %s\n", argv[0], argv[1], argv[2]);
-  struct client_logged *add_client = malloc(sizeof(struct client_logged *));
+  //TODO SEGFAULTS!!!!
+  struct client_logged *add_client = malloc(sizeof(struct client_logged));
   add_client->port = strtol(argv[0], &end, 10);
+  memset(add_client->hostname, 0, sizeof(add_client->hostname));
   strcpy(add_client->hostname, argv[1]);
+  memset(add_client->ip_addr, 0, sizeof(add_client->ip_addr));
   strcpy(add_client->ip_addr, argv[2]);
+  print_clients(add_client);
   list_insert_ordered(&connected_list, &add_client->elem, 
       (list_less_func *)&sort_port_client, NULL);
+  printf("Inserted\n");
 }
 void print_client_list()
 {
@@ -88,8 +109,37 @@ void print_client_list()
       iter = list_next(iter))
   {
     id = list_entry(iter, struct client_logged, elem);
-    printf("%s\n", "in here?");
     printf("%-5d%-35s%-20s%-8d\n", list_id++, id->hostname, id->ip_addr, id->port);
   }
   //Nothing found
+}
+void bind_client(int sockfd)
+{
+  struct sockaddr_in in;
+  bzero(&in, sizeof(in));
+  char *end;
+  int hport = htons(get_listening_port());
+  in.sin_family = AF_INET;
+  in.sin_addr.s_addr = htonl(INADDR_ANY);
+  in.sin_port = hport;
+  printf("%d sockfd\n", sockfd);
+
+  bind(sockfd, (struct sockaddr *) &in, sizeof(in));
+}
+bool verify_ip(char *ip)
+{
+  struct client_logged* find_client;
+  for(struct list_elem *iter = list_begin(&connected_list); iter!=list_end(&connected_list);
+      iter = list_next(iter))
+  {
+    find_client = list_entry(iter, struct client_logged, elem);
+    //printf("Loop 1 %d %d\n", find_client->sockfd, fd);
+    if(!strcmp(find_client->ip_addr,ip))
+      return true;
+  }
+  return false;
+}
+void print_clients(struct client_logged *print)
+{
+  printf("%d %s %s\n", print->port, print->ip_addr, print->hostname);
 }
