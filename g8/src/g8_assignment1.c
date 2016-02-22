@@ -122,8 +122,8 @@ int main(int argc, char **argv)
 }
 int parse_shell()
 {
-  char shell_input[255];
-  char message[255];
+  char shell_input[MAX_LENGTH];
+  char message[MAX_LENGTH];
   static bool is_client_connected = false;
   int ret = 0;
   static int server_sock;
@@ -131,7 +131,7 @@ int parse_shell()
   /*
    * Get the input
    */
-  fgets(shell_input, 255, stdin);
+  fgets(shell_input, MAX_LENGTH, stdin);
   if(strlen(shell_input) <= 1)
     return 0;
   shell_input[strlen(shell_input)-1] = '\0';
@@ -142,7 +142,7 @@ int parse_shell()
    */
   char *arg;
   int argc = 0;
-  char argv[4][255];
+  char argv[4][256];
   char *temp;
   char *command = strtok_r(shell_input, " ", &temp);
   //TODO reorder all commands!!
@@ -177,7 +177,7 @@ int parse_shell()
   // -------------------Common commands ---------------------------
   else if(!is_server)
   {
-    char arg_copy[128];
+    char arg_copy[MAX_LENGTH];
     if(temp!=NULL)
     {
       strcpy(arg_copy, temp);

@@ -40,7 +40,7 @@ int client_send(int sockfd, char *buf)
 int client_send_msg(int sockfd, char *buf)
 {
   int ret;
-  char msg[256];
+  char msg[MAX_LENGTH];
   //strcpy(msg, buf);
   char *tmp;
   char *ip = strtok_r(buf, " ", &tmp);
@@ -56,10 +56,10 @@ void client_close(int sockfd)
 }
 void client_receive(int sockfd)
 {
-  char msg[255];//= "Server!!\0";
-  memset(msg, 0, 255);
+  char msg[MAX_LENGTH];//= "Server!!\0";
+  memset(msg, 0, MAX_LENGTH);
   int ret, i=0;
-  ret = recv(sockfd, msg, 256, 0);
+  ret = recv(sockfd, msg, MAX_LENGTH, 0);
   if(ret>0)
   {
     char *temp = NULL;

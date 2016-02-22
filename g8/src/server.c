@@ -115,9 +115,9 @@ void add_info_to_client(char *args, int fd)
 }
 void server_receive(int sockfd)
 {
-  char msg[255];//= "Server!!\0";
+  char msg[MAX_LENGTH];//= "Server!!\0";
   int ret, i=0;
-  ret = recv(sockfd, msg, 256, 0);
+  ret = recv(sockfd, msg, MAX_LENGTH, 0);
   if(ret>0)
   {
     get_host_name(sockfd, NULL);
@@ -244,7 +244,7 @@ void send_to_client(int sockfd, char *msg)
 {
   struct client_info *sender = find_client_by_fd(sockfd);
   sender->sent_msg++;
-  char relayed_message[256];
+  char relayed_message[MAX_LENGTH];
   char hostname[64];
 
   //Find destination
@@ -276,7 +276,7 @@ void send_to_all(int sockfd, char *message)
   sender->sent_msg++;
 
   char hostname[64];
-  char relayed_message[256];
+  char relayed_message[MAX_LENGTH];
   get_host_name(sockfd, hostname);
   sprintf(relayed_message, "MSG msg from:%s\n[msg]:%s\n", hostname, message);
   LOG("msg from:%s, to:%s\n[msg]:%s\n", sender->ip_addr, "255.255.255.255", message);

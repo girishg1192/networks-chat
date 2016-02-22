@@ -13,6 +13,7 @@
 #include "logger.h"
 
 #define PORT "6667"
+#define MAX_LENGTH 512
 #define STDIN 0
 #define MY_PC
 #ifdef MY_PC
