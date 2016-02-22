@@ -10,11 +10,12 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include "list.h"
+#include "logger.h"
 
 #define PORT "6667"
 #define STDIN 0
-#define LINUX
-#ifdef LINUX
+#define MY_PC
+#ifdef MY_PC
 #define LOG printf
 #else
 #define LOG cse4589_print_and_log

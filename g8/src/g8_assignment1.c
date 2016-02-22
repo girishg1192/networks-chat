@@ -21,7 +21,7 @@
  * This contains the main function. Add further description here....
  */
 #include "../include/global.h"
-#include "../include/logger.h"
+//#include "../include/logger.h"
 
 #include "server.h"
 #include "client.h"
@@ -49,7 +49,9 @@ int main(int argc, char **argv)
   fd_set temp;
 
   /*Init. Logger*/
-  //cse4589_init_log(argv[2]);
+#ifndef MY_PC
+  cse4589_init_log(argv[2]);
+#endif
 
   int sock;
   if(argc<3)
@@ -101,17 +103,21 @@ int main(int argc, char **argv)
         for(int fd = 3; fd<=active_sockets; fd++)
         {
           if(FD_ISSET(fd, &temp))
+          {
             if(is_server)
               server_receive(fd);
             else
               client_receive(fd);
+          }
         }
       } //End of else
     } //end of select handling
   } //end loop
   clear_fd(sock);
   close(sock);
-  //fclose(fopen(LOGFILE, "w"));
+#ifndef MY_PC
+  fclose(fopen(LOGFILE, "w"));
+#endif
   return 0;
 }
 int parse_shell()

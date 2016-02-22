@@ -17,6 +17,7 @@ void send_queued_message(struct client_info *connection);
 void block_client(struct client_info *, char *ip);
 void unblock_client(struct client_info *blocker, char *ip);
 bool check_if_blocked(struct client_info *sender, struct client_info * dest);
+int usleep(int);
 
 
 int server_start(char *port)
@@ -27,7 +28,11 @@ int server_start(char *port)
 
   //Create a socket
   int sockfd = create_socket(&servinfo, NULL, port);
-
+  int yes =1;
+  if (setsockopt(sockfd,SOL_SOCKET,SO_REUSEADDR,&yes,sizeof(int)) == -1) {
+      perror("setsockopt");
+      exit(1);
+  } 
   //Do server stuff
   //err = bind(sockfd, servinfo->ai_addr, servinfo->ai_addrlen);
   struct sockaddr_in in;
