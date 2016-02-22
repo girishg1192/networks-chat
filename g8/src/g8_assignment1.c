@@ -278,6 +278,7 @@ int parse_shell()
   {
     if(!strcmp("STATISTICS", command))
     {
+      print_success(1, command);
       print_stats();
     }
     if(!strcmp("BLOCKED", command))
