@@ -1,9 +1,12 @@
 #include "client.h"
 
 struct list connected_list;
+struct list blocked_list;
 void client_fill_list();
 void bind_client(int);
+
 bool verify_ip(char *ip);
+
 void print_clients(struct client_logged *print);
 struct client_logged* find_client_ip_port(char *ip, int port);
 void clear_list();
@@ -18,6 +21,7 @@ int client_connect(char *host, char *port)
   get_host_name(sockfd, NULL);
   freeaddrinfo(servinfo);
   list_init(&connected_list);
+  list_init(&blocked_list);
   return sockfd;
 }
 void client_identify(int fd)
@@ -117,7 +121,7 @@ void print_client_list()
       iter = list_next(iter))
   {
     id = list_entry(iter, struct client_logged, elem);
-    printf("%-5d%-35s%-20s%-8d\n", list_id++, id->hostname, id->ip_addr, id->port);
+    LOG("%-5d%-35s%-20s%-8d\n", list_id++, id->hostname, id->ip_addr, id->port);
   }
   //Nothing found
 }
@@ -136,6 +140,10 @@ void bind_client(int sockfd)
 }
 bool verify_ip(char *ip)
 {
+  printf("verify");
+  if(!validate_ip(ip))
+    return false;
+  printf("valid ip\n");
   struct client_logged* find_client;
   for(struct list_elem *iter = list_begin(&connected_list); iter!=list_end(&connected_list);
       iter = list_next(iter))
@@ -164,6 +172,21 @@ struct client_logged* find_client_ip_port(char *ip, int port)
   }
   return NULL;
 }
+
+struct ip_info* is_client_blocked(char *ip)
+{
+  struct ip_info *find_client;
+  for(struct list_elem *iter = list_begin(&blocked_list); iter!=list_end(&blocked_list);
+      iter = list_next(iter))
+  {
+    find_client = list_entry(iter, struct ip_info, elem);
+    //printf("Loop 1 %d %d\n", find_client->sockfd, fd);
+    if(!strcmp(find_client->ip_addr,ip))
+      return find_client;
+  }
+  return NULL;
+}
+
 void clear_list()
 {
   while(!list_empty(&connected_list))
@@ -171,5 +194,26 @@ void clear_list()
     struct list_elem *e = list_pop_front(&connected_list);
     struct client_logged *free_node = list_entry(e, struct client_logged, elem);
     free(free_node);
+  }
+}
+void add_to_block_list(char *ip)
+{
+  struct ip_info *blocked_ip = malloc(sizeof(struct ip_info));
+  strcpy(blocked_ip->ip_addr, ip);
+  list_push_back(&blocked_list, &blocked_ip->elem);
+}
+void remove_from_block_list(char *ip)
+{
+  struct list_elem *iter = list_begin(&blocked_list);
+  while(iter!=list_end(&blocked_list))
+  {
+    struct ip_info *ip_check = list_entry(iter, struct ip_info, elem);
+    if(!strcmp(ip_check->ip_addr, ip))
+    {
+      iter = list_remove(iter);
+      free(ip_check);
+    }
+    else 
+      iter = list_next(iter);
   }
 }

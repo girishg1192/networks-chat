@@ -59,9 +59,9 @@ int get_listening_port()
 void print_success(int ret, char *command)
 {
   if(ret)
-    printf("[%s:SUCCESS]\n", command);
+    LOG("[%s:SUCCESS]\n", command);
   else
-    printf("[%s:ERROR]\n", command);
+    LOG("[%s:ERROR]\n", command);
 }
 
 /* FDSET operators
@@ -74,4 +74,26 @@ void add_fd(int newfd)
 void clear_fd(int oldfd)
 {
   FD_CLR(oldfd, &wait_fd);
+}
+/* Check IP
+ */
+bool validate_ip(char *ip)
+{
+  char ip_copy[INET_ADDRSTRLEN];
+  strcpy(ip_copy, ip);
+
+  char *tmp;
+  char *end;
+  int ip_byte;
+  char *token = strtok_r(ip_copy, ".", &tmp);
+  int bytes=1;
+  while(token)
+  {
+    if(bytes++>4) return false;
+    ip_byte = strtol(token, &end, 10);
+    if(!(ip_byte<=255 && ip_byte>=0))
+        return false;
+    token = strtok_r(NULL, ".", &tmp);
+  }
+  return true;
 }

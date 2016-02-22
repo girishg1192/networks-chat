@@ -2,7 +2,6 @@
 
 //For gethostname()
 #include <unistd.h>
-#include "list.h"
 
 int client_connect(char *host, char *port);
 int client_send(int sockfd, char *message);
@@ -10,6 +9,14 @@ void client_identify(int fd);
 void client_receive(int fd);
 void client_kill(int fd);
 void client_list();
+int client_send_msg(int sockfd, char *buf);
+void add_to_block_list(char *ip);
+void remove_from_block_list(char *ip);
+
+void print_client_list();
+struct ip_info* is_client_blocked(char *ip);
+
+bool verify_ip(char *ip);
 
 struct client_logged
 {

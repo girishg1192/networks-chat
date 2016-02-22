@@ -139,90 +139,153 @@ int parse_shell()
   char *temp;
   char *command = strtok_r(shell_input, " ", &temp);
   //TODO reorder all commands!!
-  if(!strcmp("SEND", command))
-  {
-    if(!is_client_connected)
-      print_success(0,command);
-    else
-      print_success(client_send_msg(server_sock, temp), command);
-  }
-  for(arg = strtok_r(NULL, " ", &temp); arg; arg = strtok_r(NULL, " ", &temp))
-  {
-    strcpy(argv[argc], arg);
-    argc++;
-  }
-  if(!strcmp("LOGIN", command))
-  {
-    if(!is_server && !(is_client_connected || argc!=2))
-    {
-      printf("Connecting to server %s %s\n", argv[0], argv[1]);
-      int newfd = client_connect(argv[0], argv[1]);
-      if(newfd<=1)
-      {
-        printf("[%s:ERROR]\n", command);
-        return 0;
-      }
-      is_client_connected = true;
-      add_fd(newfd);
-      client_identify(newfd);
-      server_sock = newfd;
-      print_success(1, command);
-    }
-    else
-      print_success(0, command);
-  }
-  if(!strcmp("EXIT", command))
-  {
-    return 1;
-  }
-  else if(!strcmp("LOGOUT", command))
-  {
-    if(is_client_connected)
-    {
-      close(server_sock);
-      clear_fd(server_sock);
-      is_client_connected  = false;
-      server_sock = -1;
-      print_success(1, command);
-    }
-    else
-      print_success(0, command);
-  }
+  // ----------------Commands common for server/client ------------
   if(!strcmp("AUTHOR", command))
   {
     print_success(1, command);
-    printf("I, g8, have read and understood the course academic integrity policy.\n");
+    LOG("I, g8, have read and understood the course academic integrity policy.\n");
   }
-  if(!strcmp("PORT", command))
+  else if(!strcmp("PORT", command))
   {
     print_success(1, command);
-    printf("PORT:%d\n", get_listening_port());
+    LOG("PORT:%d\n", get_listening_port());
   }
-  if(!strcmp("IP", command))
+  else if(!strcmp("IP", command))
   {
     print_success(1, command);
     get_ip();
   }
-  if(!strcmp("LIST", command))
+  else if(!strcmp("LIST", command))
   {
     print_success(1, command);
-    print_client_list();
+    if(is_server)
+      print_connected_client_list();
+    else
+      print_client_list();
   }
-  else if(!strcmp("REFRESH", command))
+  else if(!strcmp("EXIT", command))
   {
-    client_send(server_sock, command);
-    print_success(1, command);
+    return 1;
   }
-  else if(!strcmp("BROADCAST", command))
+  // -------------------Common commands ---------------------------
+  else if(!is_server)
   {
-    if(argc)
+    char arg_copy[128];
+    if(temp!=NULL)
     {
-      client_send(server_sock, message);
+      strcpy(arg_copy, temp);
+      for(arg = strtok_r(NULL, " ", &temp); arg; arg = strtok_r(NULL, " ", &temp))
+      {
+        strcpy(argv[argc], arg);
+        argc++;
+      }
+    }
+    if(!strcmp("SEND", command))
+    {
+      if(!is_client_connected)
+        print_success(0,command);
+      else
+        print_success(client_send_msg(server_sock, arg_copy), command);
+    }
+    else if(!strcmp("LOGIN", command))
+    {
+      if(!is_server && !(is_client_connected || argc!=2) && validate_ip(argv[0]))
+      {
+        printf("Connecting to server %s %s\n", argv[0], argv[1]);
+        int newfd = client_connect(argv[0], argv[1]);
+        if(newfd<=1)
+        {
+          LOG("[%s:ERROR]\n", command);
+          return 0;
+        }
+        //TODO client connects to unknown port?
+        is_client_connected = true;
+        add_fd(newfd);
+        client_identify(newfd);
+        server_sock = newfd;
+        print_success(1, command);
+      }
+      else
+        print_success(0, command);
+    }
+    else if(!strcmp("LOGOUT", command))
+    {
+      if(is_client_connected)
+      {
+        close(server_sock);
+        clear_fd(server_sock);
+        is_client_connected  = false;
+        server_sock = -1;
+        print_success(1, command);
+      }
+      else
+        print_success(0, command);
+    }
+    else if(!strcmp("REFRESH", command))
+    {
+      client_send(server_sock, command);
       print_success(1, command);
     }
-    else print_success(0, command);
+    else if(!strcmp("BROADCAST", command))
+    {
+      if(argc)
+      {
+        client_send(server_sock, message);
+        print_success(1, command);
+      }
+      else print_success(0, command);
+    }
+    else if(!strcmp("BLOCK", command))
+    {
+      printf("asda\n");
+      if(argc == 1 && verify_ip(argv[0])
+          && !is_client_blocked(argv[0]))
+      {
+        //TODO CHECK IP in list!! done!
+        print_success(1, command);
+        add_to_block_list(argv[0]);
+        client_send(server_sock, message);
+      }
+      else
+      {
+        print_success(0, command);
+      }
+    }
+    else if(!strcmp("UNBLOCK", command))
+    {
+      if(argc == 1 && verify_ip(argv[0])
+          && is_client_blocked(argv[0]))
+      {
+        print_success(1, command);
+        remove_from_block_list(argv[0]);
+        client_send(server_sock, message);
+      }
+      else
+        print_success(0, command);
+    }
+    else
+      print_success(0, command);
   }
-  printf("[%s:END]\n", command);
+  else
+  {
+    if(!strcmp("STATISTICS", command))
+    {
+      print_stats();
+    }
+    if(!strcmp("BLOCKED", command))
+    {
+      if(temp == NULL)
+        print_success(0, command);
+      char *ip = strtok_r(NULL, " ", &temp);
+      if(temp==NULL && validate_ip(ip))
+      {
+        print_blocked_clients(ip);
+      }
+      print_success(1, command);
+    }
+  }
+
+  LOG("[%s:END]\n", command);
   return 0;
 }
 void get_ip()
@@ -241,5 +304,5 @@ void get_ip()
   inet_ntop(AF_INET, &in->sin_addr, ipstr, sizeof(ipstr));
 
   close(ip_sock);
-  printf("%s\n", ipstr);
+  LOG("IP:%s\n", ipstr);
 }
