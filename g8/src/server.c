@@ -131,9 +131,9 @@ void server_receive(int sockfd)
     }
     else if(!strcmp(sig, "SEND"))
     {
-      print_success(1, sig);
+      print_success(1, "RELAYED");
       send_to_client(sockfd, temp);
-      LOG("[%s:END]\n", sig);
+      LOG("[%s:END]\n", "RELAYED");
     }
     else if(!strcmp(sig, "REFRESH"))
     {
