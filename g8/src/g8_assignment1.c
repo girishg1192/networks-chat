@@ -79,9 +79,8 @@ int main(int argc, char **argv)
   sock = server_sock;
   add_fd(sock);
 
-  //  printf("socket %d %d for %s\n", active_sockets, sock, argv[1]);
   int i =2;
-  while(i && ! exit_flag)
+  while(!exit_flag)
   {
     temp = wait_fd;
     int ret = select(active_sockets, &temp, NULL, NULL, NULL);
@@ -91,25 +90,27 @@ int main(int argc, char **argv)
       {
         exit_flag = parse_shell();
       }
-      if(FD_ISSET(server_sock, &temp) && is_server)
+      else if(FD_ISSET(server_sock, &temp) && is_server)
       {
         // server socket is active, check for new connections
         int new_socket = server_accept(server_sock);
         add_fd(new_socket);
       }
-      for(int fd = 3; fd<=active_sockets; fd++)
+      else
       {
-        if(FD_ISSET(fd, &temp))
+        for(int fd = 3; fd<=active_sockets; fd++)
         {
-          if(is_server)
-            server_receive(fd);
-          else
-            client_receive(fd);
+          if(FD_ISSET(fd, &temp))
+            if(is_server)
+              server_receive(fd);
+            else
+              client_receive(fd);
         }
-      }
-    }
-  }
-  server_kill(sock);
+      } //End of else
+    } //end of select handling
+  } //end loop
+  clear_fd(sock);
+  close(sock);
   //fclose(fopen(LOGFILE, "w"));
   return 0;
 }
@@ -212,10 +213,11 @@ int parse_shell()
     {
       if(is_client_connected)
       {
-        close(server_sock);
-        clear_fd(server_sock);
+        //close(server_sock);
+        //clear_fd(server_sock);
+        client_send(server_sock, command);
         is_client_connected  = false;
-        server_sock = -1;
+        //server_sock = -1;
         print_success(1, command);
       }
       else
@@ -276,12 +278,15 @@ int parse_shell()
     {
       if(temp == NULL)
         print_success(0, command);
-      char *ip = strtok_r(NULL, " ", &temp);
-      if(temp==NULL && validate_ip(ip))
+      else
       {
-        print_blocked_clients(ip);
+        char *ip = strtok_r(NULL, " ", &temp);
+        if(temp==NULL && validate_ip(ip))
+        {
+          print_blocked_clients(ip);
+        }
+        print_success(1, command);
       }
-      print_success(1, command);
     }
   }
 

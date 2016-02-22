@@ -71,11 +71,10 @@ void client_receive(int sockfd)
     }
     else if(!strcmp(command, "MSG"))
     {
-      printf("[EVENT]%s\n", temp);
+      LOG("%s\n", temp);
     }
     else if(!strcmp(command, "REFRESH"))
     {
-      printf("clear all data\n");
       clear_list();
     }
   }
@@ -134,22 +133,17 @@ void bind_client(int sockfd)
   in.sin_family = AF_INET;
   in.sin_addr.s_addr = htonl(INADDR_ANY);
   in.sin_port = hport;
-  printf("%d sockfd\n", sockfd);
-
   bind(sockfd, (struct sockaddr *) &in, sizeof(in));
 }
 bool verify_ip(char *ip)
 {
-  printf("verify");
   if(!validate_ip(ip))
     return false;
-  printf("valid ip\n");
   struct client_logged* find_client;
   for(struct list_elem *iter = list_begin(&connected_list); iter!=list_end(&connected_list);
       iter = list_next(iter))
   {
     find_client = list_entry(iter, struct client_logged, elem);
-    //printf("Loop 1 %d %d\n", find_client->sockfd, fd);
     if(!strcmp(find_client->ip_addr,ip))
       return true;
   }
@@ -180,7 +174,6 @@ struct ip_info* is_client_blocked(char *ip)
       iter = list_next(iter))
   {
     find_client = list_entry(iter, struct ip_info, elem);
-    //printf("Loop 1 %d %d\n", find_client->sockfd, fd);
     if(!strcmp(find_client->ip_addr,ip))
       return find_client;
   }

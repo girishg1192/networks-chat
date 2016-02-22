@@ -39,7 +39,6 @@ void fill_addrinfo(struct addrinfo *info)
 {
   if(info==NULL)
   {
-    printf("addrinfo structure NULL!\n");
     exit(1);
   }
   memset(info, 0, sizeof(struct addrinfo));

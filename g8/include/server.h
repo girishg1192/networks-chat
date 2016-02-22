@@ -27,7 +27,14 @@ struct client_info
   int recv_msg;
 
   struct list blocked_list;
+  struct list inbox;
 
+  struct list_elem elem;
+};
+
+struct queued_msg
+{
+  char message[256];
   struct list_elem elem;
 };
 
@@ -36,5 +43,12 @@ static bool sort_port(struct list_elem *al,struct list_elem *bl,
 {
   struct client_info *a = list_entry(al, struct client_info, elem);
   struct client_info *b = list_entry(bl, struct client_info, elem);
+  return a->port < b->port;
+}
+static bool sort_block(struct list_elem *al,struct list_elem *bl,
+          void *aux) 
+{
+  struct ip_info *a = list_entry(al, struct ip_info, elem);
+  struct ip_info *b = list_entry(bl, struct ip_info, elem);
   return a->port < b->port;
 }
