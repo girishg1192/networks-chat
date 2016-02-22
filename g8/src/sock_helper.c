@@ -94,5 +94,7 @@ bool validate_ip(char *ip)
         return false;
     token = strtok_r(NULL, ".", &tmp);
   }
+  if(bytes!=5)
+    return false;
   return true;
 }

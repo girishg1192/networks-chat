@@ -5,10 +5,13 @@ struct list blocked_list;
 void client_fill_list();
 void bind_client(int);
 
+void client_receive_file(int sockfd);
+
 bool verify_ip(char *ip);
 
 void print_clients(struct client_logged *print);
 struct client_logged* find_client_ip_port(char *ip, int port);
+struct client_logged* find_client_ip(char *ip);
 void clear_list();
 
 int client_connect(char *host, char *port)
@@ -17,21 +20,25 @@ int client_connect(char *host, char *port)
   //Create a socket
   int sockfd = create_socket(&servinfo, host, port);
   bind_client(sockfd);
-  connect(sockfd, servinfo->ai_addr, servinfo->ai_addrlen);
-  get_host_name(sockfd, NULL);
+  int ret = connect(sockfd, servinfo->ai_addr, servinfo->ai_addrlen);
   freeaddrinfo(servinfo);
-  list_init(&connected_list);
-  list_init(&blocked_list);
-  return sockfd;
+  if(ret!=-1)
+  {
+    get_host_name(sockfd, NULL);
+    list_init(&connected_list);
+    list_init(&blocked_list);
+    return sockfd;
+  }
+  return -1;
 }
-void client_identify(int fd)
+int client_identify(int fd)
 {
   char command[132];
   char host_name[128];
   gethostname(host_name, 128);
   sprintf(command, "LOGIN %d %s", get_listening_port(), host_name);
   printf("%s\n", command);
-  client_send(fd, command);
+  return client_send(fd, command);
 }
 int client_send(int sockfd, char *buf)
 {
@@ -168,6 +175,19 @@ struct client_logged* find_client_ip_port(char *ip, int port)
   }
   return NULL;
 }
+struct client_logged* find_client_ip(char *ip)
+{
+  struct client_logged* find_client;
+  for(struct list_elem *iter = list_begin(&connected_list); iter!=list_end(&connected_list);
+      iter = list_next(iter))
+  {
+    find_client = list_entry(iter, struct client_logged, elem);
+    //printf("Loop 1 %d %d\n", find_client->sockfd, fd);
+    if(!strcmp(find_client->ip_addr,ip))
+      return find_client;
+  }
+  return NULL;
+}
 
 struct ip_info* is_client_blocked(char *ip)
 {
@@ -210,5 +230,39 @@ void remove_from_block_list(char *ip)
     }
     else 
       iter = list_next(iter);
+  }
+}
+
+void client_send_file(char *ip, char *file_name)
+{
+  struct client_logged *target = find_client_ip(ip);
+  char port[8];
+  char buffer[1024];
+  memset(port, 0, 8);
+  sprintf(port, "%d", target->port);
+  int filefd = client_connect(ip, port);
+  int read_bytes;
+  FILE *fp = fopen(file_name, "rb");
+  printf("sending file\n");
+  while((read_bytes= fread(buffer, sizeof(buffer), 1, fp)) > 0)
+  {
+    printf("%s ", buffer);
+    send(filefd, buffer, read_bytes, 0);
+  }
+  close(filefd);
+  fclose(fp);
+}
+void client_receive_file(int sockfd)
+{
+  struct sockaddr_storage client_addr;
+  socklen_t size_address = sizeof(struct sockaddr_storage);
+  printf("Receiving file\n");
+  int newfd = accept(sockfd, (struct sockaddr *) &client_addr, &size_address);
+  char buffer[1024];
+  int bytes_receive;
+  printf("Receiving file\n");
+  while((bytes_receive = recv(newfd, buffer, 1024, 0)) > 0)
+  {
+    printf("%s \n", buffer);
   }
 }

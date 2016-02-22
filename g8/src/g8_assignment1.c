@@ -45,6 +45,7 @@ int main(int argc, char **argv)
   char *service;
   int server_sock = -1;
   int exit_flag = 0;
+  int ftp_sock = -1;
 
   fd_set temp;
 
@@ -92,11 +93,17 @@ int main(int argc, char **argv)
       {
         exit_flag = parse_shell();
       }
-      else if(FD_ISSET(server_sock, &temp) && is_server)
+      else if(FD_ISSET(server_sock, &temp))
       {
+        printf("ACTIVITY!!!\n");
         // server socket is active, check for new connections
-        int new_socket = server_accept(server_sock);
-        add_fd(new_socket);
+        if(is_server)
+        {
+          int new_socket = server_accept(server_sock);
+          add_fd(new_socket);
+        }
+        else
+          client_receive_file(server_sock);
       }
       else
       {
@@ -191,22 +198,34 @@ int parse_shell()
     {
       if(!is_server && !(is_client_connected || argc!=2) && validate_ip(argv[0]))
       {
-        printf("Connecting to server %s %s\n", argv[0], argv[1]);
         int newfd = client_connect(argv[0], argv[1]);
         if(newfd<=1)
         {
-          LOG("[%s:ERROR]\n", command);
-          return 0;
+          print_success(0, command);
         }
-        //TODO client connects to unknown port?
-        is_client_connected = true;
-        add_fd(newfd);
-        client_identify(newfd);
-        server_sock = newfd;
-        print_success(1, command);
+        else
+        {
+          //TODO client connects to unknown port?
+          is_client_connected = true;
+          add_fd(newfd);
+          client_identify(newfd);
+          server_sock = newfd;
+          print_success(1, command);
+        }
       }
       else
         print_success(0, command);
+    }
+    else if(!strcmp("SENDFILE", command))
+    {
+      if(argc == 2 && validate_ip(argv[0]))
+      {
+        print_success(1, command);
+        client_send_file(argv[0], argv[1]);
+      }
+      else
+        print_success(0, command);
+
     }
     else if(is_client_connected)
     {

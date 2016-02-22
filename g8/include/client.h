@@ -5,7 +5,7 @@
 
 int client_connect(char *host, char *port);
 int client_send(int sockfd, char *message);
-void client_identify(int fd);
+int client_identify(int fd);
 void client_receive(int fd);
 void client_kill(int fd);
 void client_list();
