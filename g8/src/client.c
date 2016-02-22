@@ -71,7 +71,9 @@ void client_receive(int sockfd)
     }
     else if(!strcmp(command, "MSG"))
     {
-      LOG("%s\n", temp);
+      print_success(1, "RECEIVED");
+      LOG("%s", temp);
+      LOG("[%s:END]\n", "RECEIVED");
     }
     else if(!strcmp(command, "REFRESH"))
     {

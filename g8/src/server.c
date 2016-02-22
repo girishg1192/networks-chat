@@ -126,7 +126,9 @@ void server_receive(int sockfd)
     }
     else if(!strcmp(sig, "SEND"))
     {
+      print_success(1, sig);
       send_to_client(sockfd, temp);
+      LOG("[%s:END]\n", sig);
     }
     else if(!strcmp(sig, "REFRESH"))
     {
@@ -134,7 +136,9 @@ void server_receive(int sockfd)
     }
     else if(!strcmp(sig, "BROADCAST"))
     {
+      print_success(1, sig);
       send_to_all(sockfd, temp);
+      LOG("[%s:END]\n", sig);
     }
     else if(!strcmp(sig, "BLOCK"))
     {
@@ -162,8 +166,9 @@ void server_kill(int sockfd)
   struct client_info *dead_client = find_client_by_fd(sockfd);
   list_remove(&dead_client->elem);
   free(dead_client);
-  close(sockfd);
   clear_fd(sockfd);
+  close(sockfd);
+  printf("Killed client\n");
 }
 struct client_info* find_client_by_fd(int fd)
 {
@@ -363,7 +368,7 @@ void print_stats()
   {
     id = list_entry(iter, struct client_info, elem);
     LOG("%-5d%-35s%-8d%-8d%-8s\n", list_id++, id->hostname, 
-        id->sent_msg, id->recv_msg, (id->is_connected?"Online":"Offline"));
+        id->sent_msg, id->recv_msg, (id->is_connected?"online":"offline"));
   }
   //Nothing found
 }
