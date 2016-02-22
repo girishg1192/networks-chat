@@ -187,14 +187,7 @@ int parse_shell()
         argc++;
       }
     }
-    if(!strcmp("SEND", command))
-    {
-      if(!is_client_connected)
-        print_success(0,command);
-      else
-        print_success(client_send_msg(server_sock, arg_copy), command);
-    }
-    else if(!strcmp("LOGIN", command))
+    if(!strcmp("LOGIN", command))
     {
       if(!is_server && !(is_client_connected || argc!=2) && validate_ip(argv[0]))
       {
@@ -215,58 +208,70 @@ int parse_shell()
       else
         print_success(0, command);
     }
-    else if(!strcmp("LOGOUT", command))
+    else if(is_client_connected)
     {
-      if(is_client_connected)
+      if(!strcmp("SEND", command))
       {
-        //close(server_sock);
-        //clear_fd(server_sock);
+        if(!is_client_connected)
+          print_success(0,command);
+        else
+          print_success(client_send_msg(server_sock, arg_copy), command);
+      }
+      else if(!strcmp("LOGOUT", command))
+      {
+        if(is_client_connected)
+        {
+          //close(server_sock);
+          //clear_fd(server_sock);
+          client_send(server_sock, command);
+          is_client_connected  = false;
+          //server_sock = -1;
+          print_success(1, command);
+        }
+        else
+          print_success(0, command);
+      }
+      else if(!strcmp("REFRESH", command))
+      {
         client_send(server_sock, command);
-        is_client_connected  = false;
-        //server_sock = -1;
         print_success(1, command);
       }
-      else
-        print_success(0, command);
-    }
-    else if(!strcmp("REFRESH", command))
-    {
-      client_send(server_sock, command);
-      print_success(1, command);
-    }
-    else if(!strcmp("BROADCAST", command))
-    {
-      if(argc)
+      else if(!strcmp("BROADCAST", command))
       {
-        client_send(server_sock, message);
-        print_success(1, command);
+        if(argc)
+        {
+          client_send(server_sock, message);
+          print_success(1, command);
+        }
+        else print_success(0, command);
       }
-      else print_success(0, command);
-    }
-    else if(!strcmp("BLOCK", command))
-    {
-      printf("asda\n");
-      if(argc == 1 && verify_ip(argv[0])
-          && !is_client_blocked(argv[0]))
+      else if(!strcmp("BLOCK", command))
       {
-        //TODO CHECK IP in list!! done!
-        print_success(1, command);
-        add_to_block_list(argv[0]);
-        client_send(server_sock, message);
+        printf("asda\n");
+        if(argc == 1 && verify_ip(argv[0])
+            && !is_client_blocked(argv[0]))
+        {
+          //TODO CHECK IP in list!! done!
+          print_success(1, command);
+          add_to_block_list(argv[0]);
+          client_send(server_sock, message);
+        }
+        else
+        {
+          print_success(0, command);
+        }
       }
-      else
+      else if(!strcmp("UNBLOCK", command))
       {
-        print_success(0, command);
-      }
-    }
-    else if(!strcmp("UNBLOCK", command))
-    {
-      if(argc == 1 && verify_ip(argv[0])
-          && is_client_blocked(argv[0]))
-      {
-        print_success(1, command);
-        remove_from_block_list(argv[0]);
-        client_send(server_sock, message);
+        if(argc == 1 && verify_ip(argv[0])
+            && is_client_blocked(argv[0]))
+        {
+          print_success(1, command);
+          remove_from_block_list(argv[0]);
+          client_send(server_sock, message);
+        }
+        else
+          print_success(0, command);
       }
       else
         print_success(0, command);
@@ -281,7 +286,7 @@ int parse_shell()
       print_success(1, command);
       print_stats();
     }
-    if(!strcmp("BLOCKED", command))
+    else if(!strcmp("BLOCKED", command))
     {
       if(temp == NULL)
         print_success(0, command);
@@ -295,6 +300,8 @@ int parse_shell()
         print_success(1, command);
       }
     }
+    else
+      print_success(0, command);
   }
 
   LOG("[%s:END]\n", command);
