@@ -5,7 +5,7 @@ struct list blocked_list;
 void client_fill_list();
 void bind_client(int);
 
-void client_receive_file(int sockfd);
+void client_receive_file(int *sockfd);
 
 bool verify_ip(char *ip);
 
@@ -67,6 +67,7 @@ void client_receive(int sockfd)
   memset(msg, 0, MAX_LENGTH);
   int ret, i=0;
   ret = recv(sockfd, msg, MAX_LENGTH, 0);
+  printf("%s::\n", msg);
   if(ret>0)
   {
     char *temp = NULL;
@@ -240,29 +241,44 @@ void client_send_file(char *ip, char *file_name)
   char buffer[1024];
   memset(port, 0, 8);
   sprintf(port, "%d", target->port);
-  int filefd = client_connect(ip, port);
+  struct addrinfo *servinfo; // will point to the results
+  //Create a socket
+  int filefd= create_socket(&servinfo, ip, port);
+  bind_client(filefd);
+  int ret = connect(filefd, servinfo->ai_addr, servinfo->ai_addrlen);
+  freeaddrinfo(servinfo);
+
   int read_bytes;
-  FILE *fp = fopen(file_name, "rb");
-  printf("sending file\n");
-  while((read_bytes= fread(buffer, sizeof(buffer), 1, fp)) > 0)
+  int fd = open(file_name, O_RDONLY);
+  send(filefd, file_name, sizeof(file_name), 0);
+  while((read_bytes= read(fd, buffer, sizeof(buffer))) > 0)
   {
-    printf("%s ", buffer);
     send(filefd, buffer, read_bytes, 0);
+    memset(buffer, 0, read_bytes);
   }
+  close(fd);
   close(filefd);
-  fclose(fp);
 }
-void client_receive_file(int sockfd)
+void client_receive_file(int *sockfd_)
 {
+  int sockfd = *sockfd_;
   struct sockaddr_storage client_addr;
   socklen_t size_address = sizeof(struct sockaddr_storage);
-  printf("Receiving file\n");
-  int newfd = accept(sockfd, (struct sockaddr *) &client_addr, &size_address);
   char buffer[1024];
+  char file_name[10];
+  memset(file_name, 0, 10);
   int bytes_receive;
-  printf("Receiving file\n");
-  while((bytes_receive = recv(newfd, buffer, 1024, 0)) > 0)
+  recv(sockfd, file_name, sizeof(file_name), 0);
+  printf("opening file %s\n", file_name);
+  int fd = open(file_name, O_TRUNC | O_WRONLY | O_CREAT);
+  while((bytes_receive = recv(sockfd, buffer, sizeof(buffer), 0)) > 0)
   {
-    printf("%s \n", buffer);
+    if(!write(fd, buffer, bytes_receive))
+      printf("meh\n");
+    memset(buffer, 0, bytes_receive);
   }
+  close(fd);
+  close(sockfd);
+  clear_fd(sockfd);
+  *sockfd_ = 9999;
 }

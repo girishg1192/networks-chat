@@ -12,6 +12,8 @@ void client_list();
 int client_send_msg(int sockfd, char *buf);
 void add_to_block_list(char *ip);
 void remove_from_block_list(char *ip);
+void client_receive_file(int *sockfd_);
+void client_send_file(char *ip, char *file_name);
 
 void print_client_list();
 struct ip_info* is_client_blocked(char *ip);

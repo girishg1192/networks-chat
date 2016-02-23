@@ -45,7 +45,7 @@ int main(int argc, char **argv)
   char *service;
   int server_sock = -1;
   int exit_flag = 0;
-  int ftp_sock = -1;
+  int ftp_sock = 9999;
 
   fd_set temp;
 
@@ -95,7 +95,6 @@ int main(int argc, char **argv)
       }
       else if(FD_ISSET(server_sock, &temp))
       {
-        printf("ACTIVITY!!!\n");
         // server socket is active, check for new connections
         if(is_server)
         {
@@ -103,7 +102,16 @@ int main(int argc, char **argv)
           add_fd(new_socket);
         }
         else
-          client_receive_file(server_sock);
+        {
+          int new_socket = server_accept(server_sock);
+          //add ftp socket
+          add_fd(new_socket);
+          ftp_sock = new_socket;
+        }
+      }
+      else if(FD_ISSET(ftp_sock, &temp))
+      {
+        client_receive_file(&ftp_sock);
       }
       else
       {
