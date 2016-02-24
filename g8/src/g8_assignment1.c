@@ -60,6 +60,8 @@ int main(int argc, char **argv)
     printf("No args\n");
     return 1;
   }
+  if(!validate_port(argv[2]))
+    return 0;
 
   FD_ZERO(&wait_fd);
   FD_ZERO(&temp);
@@ -197,7 +199,7 @@ int parse_shell()
     if(!strcmp("LOGIN", command))
     {
       if(!is_server && !(is_client_connected || argc!=2) && 
-          validate_ip(argv[0]))
+          validate_ip(argv[0]) && validate_port(argv[1]))
       {
         int newfd = client_connect(argv[0], argv[1]);
         if(newfd<=1)
@@ -271,7 +273,6 @@ int parse_shell()
       }
       else if(!strcmp("BLOCK", command))
       {
-        printf("asda\n");
         if(argc == 1 && verify_ip(argv[0])
             && !is_client_blocked(argv[0]))
         {

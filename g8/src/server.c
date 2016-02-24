@@ -28,7 +28,6 @@ int server_start(char *port)
 {
   int err;
   struct addrinfo *servinfo; // will point to the results
-  printf("Starting server\n");
 
   //Create a socket
   int sockfd = create_socket(&servinfo, NULL, port);
@@ -46,7 +45,6 @@ int server_start(char *port)
   in.sin_family = AF_INET;
   in.sin_addr.s_addr = htonl(INADDR_ANY);
   in.sin_port = hport;
-  printf("%d sockfd\n", sockfd);
 
   err = bind(sockfd, (struct sockaddr *) &in, sizeof(in));
   if(err) return -1;
@@ -113,7 +111,7 @@ void add_info_to_client(char *args, int fd)
     connection->sockfd = fd;
     connection->is_connected = true;
   }
-  print_client(connection);
+  //print_client(connection);
   server_send_list(fd);
   send_queued_message(connection);
 }
@@ -124,9 +122,8 @@ void server_receive(int sockfd)
   ret = recv(sockfd, msg, MAX_LENGTH, 0);
   if(ret>0)
   {
-    get_host_name(sockfd, NULL);
+    //get_host_name(sockfd, NULL);
     msg[ret]='\0';
-    printf("RECEIVE: %s\n", msg);
     char *temp = NULL;
     char *sig = strtok_r(msg, " ", &temp);
     if(!strcmp(sig, "LOGIN"))
@@ -145,9 +142,9 @@ void server_receive(int sockfd)
     }
     else if(!strcmp(sig, "BROADCAST"))
     {
-      print_success(1, sig);
+      print_success(1, "RELAYED");
       send_to_all(sockfd, temp);
-      LOG("[%s:END]\n", sig);
+      LOG("[%s:END]\n", "RELAYED");
     }
     else if(!strcmp(sig, "BLOCK"))
     {
@@ -179,7 +176,6 @@ void server_kill(int sockfd)
   free(dead_client);
   clear_fd(sockfd);
   close(sockfd);
-  printf("Killed client\n");
 }
 struct client_info* find_client_by_fd(int fd)
 {
@@ -211,12 +207,10 @@ void server_send_list(int sockfd)
   for(struct list_elem *iter = list_begin(&client_list); iter!=list_end(&client_list);
       iter = list_next(iter))
   {
-    printf("Sending list\n");
     tmp = list_entry(iter, struct client_info, elem);
     if(!tmp) continue;
     sprintf(buf, "LIST %d %s %s", tmp->port, tmp->hostname, tmp->ip_addr);
     buf[strlen(buf)+1]= '\0';
-    printf("%s\n", buf);
     ret = send(sockfd, buf, strlen(buf), 0);
     usleep(150*1000);
     memset(buf, 0, 256);
@@ -273,8 +267,6 @@ void send_to_client(int sockfd, char *msg)
         queue_message(dest, relayed_message);
     }
   }
-  else
-    printf("blocked!\n");
 }
 void send_to_all(int sockfd, char *message)
 {
@@ -309,7 +301,6 @@ void queue_message(struct client_info *dest, char *message)
   struct queued_msg *a= malloc(sizeof(struct queued_msg));
   strcpy(a->message, message);
   list_push_back(&dest->inbox, &a->elem);
-  printf("Queued %s", a->message);
 }
 void send_queued_message(struct client_info *connection)
 {
@@ -317,7 +308,6 @@ void send_queued_message(struct client_info *connection)
   {
     struct list_elem *e = list_pop_front(&connection->inbox);
     struct queued_msg *msg = list_entry(e, struct queued_msg, elem);
-    printf("Queued message %s", msg->message);
     connection->recv_msg++;
     send(connection->sockfd, msg, strlen(msg->message), 0);
     free(msg);
@@ -331,8 +321,8 @@ void block_client(struct client_info *blocker, char *ip)
   strcpy(blocked_ip->ip_addr, ip);
   struct client_info *blocked_client = find_client_by_ip(ip);
   blocked_ip->port = blocked_client->port;
-  printf("%s %d BLOCKED %s %d\n", blocker->ip_addr, blocker->port, 
-      blocked_client->ip_addr, blocked_client->port);
+  //printf("%s %d BLOCKED %s %d\n", blocker->ip_addr, blocker->port, 
+  //    blocked_client->ip_addr, blocked_client->port);
   list_insert_ordered(&(blocker->blocked_list),  &blocked_ip->elem,
       (list_less_func *)&sort_block, NULL);
 }
@@ -344,7 +334,6 @@ void unblock_client(struct client_info *blocker, char *ip)
     struct ip_info *ip_check = list_entry(iter, struct ip_info, elem);
     if(!strcmp(ip_check->ip_addr, ip))
     {
-      printf("found blocked client\n");
       iter = list_remove(iter);
       free(ip_check);
     }
@@ -362,7 +351,6 @@ bool check_if_blocked(struct client_info *sender, struct client_info * dest)
     if(!strcmp(ip_check->ip_addr, sender->ip_addr) && 
         (ip_check->port == sender->port))
     {
-      printf("Sender blocked\n");
       return true;
     }
     iter = list_next(iter);

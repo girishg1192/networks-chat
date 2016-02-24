@@ -98,3 +98,12 @@ bool validate_ip(char *ip)
     return false;
   return true;
 }
+bool validate_port(char *port_)
+{
+  unsigned int port;
+  char *end;
+  port = strtol(port_, &end, 10);
+  if(port>=1024 && port<=65535)
+      return true;
+  return false;
+}

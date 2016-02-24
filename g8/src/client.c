@@ -24,7 +24,7 @@ int client_connect(char *host, char *port)
   freeaddrinfo(servinfo);
   if(ret!=-1)
   {
-    get_host_name(sockfd, NULL);
+    //get_host_name(sockfd, NULL);
     list_init(&connected_list);
     list_init(&blocked_list);
     return sockfd;
@@ -113,7 +113,7 @@ void client_fill_list(char *id)
   strcpy(add_client->hostname, argv[1]);
   memset(add_client->ip_addr, 0, sizeof(add_client->ip_addr));
   strcpy(add_client->ip_addr, argv[2]);
-  print_clients(add_client);
+  //print_clients(add_client);
   list_insert_ordered(&connected_list, &add_client->elem, 
       (list_less_func *)&sort_port_client, NULL);
 }
@@ -165,7 +165,6 @@ struct client_logged* find_client_ip_port(char *ip, int port)
       iter = list_next(iter))
   {
     find_client = list_entry(iter, struct client_logged, elem);
-    //printf("Loop 1 %d %d\n", find_client->sockfd, fd);
     if(!strcmp(find_client->ip_addr,ip) && (port == find_client->port))
       return find_client;
   }
@@ -178,7 +177,6 @@ struct client_logged* find_client_ip(char *ip)
       iter = list_next(iter))
   {
     find_client = list_entry(iter, struct client_logged, elem);
-    //printf("Loop 1 %d %d\n", find_client->sockfd, fd);
     if(!strcmp(find_client->ip_addr,ip))
       return find_client;
   }
@@ -265,7 +263,7 @@ void client_receive_file(int *sockfd_)
   memset(file_name, 0, 64);
   int bytes_receive;
   recv(sockfd, file_name, sizeof(file_name), 0);
-  int fd = open(file_name, O_TRUNC | O_WRONLY | O_CREAT);
+  int fd = open(file_name, O_TRUNC | O_RDWR | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
   while((bytes_receive = recv(sockfd, buffer, sizeof(buffer), 0)) > 0)
   {
     if(!write(fd, buffer, bytes_receive))

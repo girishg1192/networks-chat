@@ -46,6 +46,7 @@ void add_fd(int newfd);
 void clear_fd(int oldfd);
 
 bool validate_ip(char *ip);
+bool validate_port(char *port_);
 
 fd_set wait_fd;
 struct timeval tv;
