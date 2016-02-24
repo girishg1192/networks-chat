@@ -177,14 +177,6 @@ int parse_shell()
     print_success(1, command);
     get_ip();
   }
-  else if(!strcmp("LIST", command))
-  {
-    print_success(1, command);
-    if(is_server)
-      print_connected_client_list();
-    else
-      print_client_list();
-  }
   else if(!strcmp("EXIT", command))
   {
     return 1;
@@ -204,7 +196,8 @@ int parse_shell()
     }
     if(!strcmp("LOGIN", command))
     {
-      if(!is_server && !(is_client_connected || argc!=2) && validate_ip(argv[0]))
+      if(!is_server && !(is_client_connected || argc!=2) && 
+          validate_ip(argv[0]))
       {
         int newfd = client_connect(argv[0], argv[1]);
         if(newfd<=1)
@@ -224,17 +217,6 @@ int parse_shell()
       else
         print_success(0, command);
     }
-    else if(!strcmp("SENDFILE", command))
-    {
-      if(argc == 2 && validate_ip(argv[0]))
-      {
-        print_success(1, command);
-        client_send_file(argv[0], argv[1]);
-      }
-      else
-        print_success(0, command);
-
-    }
     else if(is_client_connected)
     {
       if(!strcmp("SEND", command))
@@ -243,6 +225,16 @@ int parse_shell()
           print_success(0,command);
         else
           print_success(client_send_msg(server_sock, arg_copy), command);
+      }
+      else if(!strcmp("SENDFILE", command))
+      {
+        if(argc == 2 && validate_ip(argv[0]))
+        {
+          print_success(1, command);
+          client_send_file(argv[0], argv[1]);
+        }
+        else
+          print_success(0, command);
       }
       else if(!strcmp("LOGOUT", command))
       {
@@ -257,6 +249,11 @@ int parse_shell()
         }
         else
           print_success(0, command);
+      }
+      else if(!strcmp("LIST", command))
+      {
+        print_success(1, command);
+        print_client_list();
       }
       else if(!strcmp("REFRESH", command))
       {
@@ -322,10 +319,17 @@ int parse_shell()
         char *ip = strtok_r(NULL, " ", &temp);
         if(temp==NULL && validate_ip(ip))
         {
-          print_blocked_clients(ip);
+          int ret = print_blocked_clients(ip);
+          print_success(ret, command);
         }
-        print_success(1, command);
+        else
+          print_success(0, command);
       }
+    }
+    else if(!strcmp("LIST", command))
+    {
+      print_success(1, command);
+      print_connected_client_list();
     }
     else
       print_success(0, command);

@@ -20,6 +20,10 @@ bool check_if_blocked(struct client_info *sender, struct client_info * dest);
 int usleep(int);
 
 
+void delete_queued_messages(struct client_info *dead_client);
+void delete_blocked_clients(struct client_info *dead_client);
+
+
 int server_start(char *port)
 {
   int err;
@@ -170,6 +174,8 @@ void server_kill(int sockfd)
 {
   struct client_info *dead_client = find_client_by_fd(sockfd);
   list_remove(&dead_client->elem);
+  delete_queued_messages(dead_client);
+  delete_blocked_clients(dead_client);
   free(dead_client);
   clear_fd(sockfd);
   close(sockfd);
@@ -305,7 +311,6 @@ void queue_message(struct client_info *dest, char *message)
   list_push_back(&dest->inbox, &a->elem);
   printf("Queued %s", a->message);
 }
-
 void send_queued_message(struct client_info *connection)
 {
   while(!list_empty(&connection->inbox))
@@ -389,17 +394,45 @@ void print_connected_client_list()
   }
   //Nothing found
 }
-void print_blocked_clients(char *ip)
+int print_blocked_clients(char *ip)
 {
   struct client_info *dest = find_client_by_ip(ip);
-  struct list_elem *iter = list_begin(&(dest->blocked_list));
+  if(dest!=NULL)
+  {
+    struct list_elem *iter = list_begin(&(dest->blocked_list));
+    int list_id = 1;
+    while(iter!=list_end(&(dest->blocked_list)))
+    {
+      struct ip_info *ip_check = list_entry(iter, struct ip_info, elem);
+      struct client_info *print = find_client_by_ip_port(ip_check->ip_addr, ip_check->port);
+      if(print!=NULL)
+        LOG("%-5d%-35s%-20s%-8d\n", list_id++, print->hostname, print->ip_addr, print->port);
+      iter = list_next(iter);
+    }
+    return 1;   //SUCCESS
+  }
+  else
+    return 0;   //IP doesnt exist in blocked list or LIST empty
+}
+void delete_blocked_clients(struct client_info *dead_client)
+{
+  struct list_elem *iter = list_begin(&(dead_client->blocked_list));
   int list_id = 1;
-  while(iter!=list_end(&(dest->blocked_list)))
+  while(iter!=list_end(&(dead_client->blocked_list)))
   {
     struct ip_info *ip_check = list_entry(iter, struct ip_info, elem);
-    struct client_info *print = find_client_by_ip_port(ip_check->ip_addr, ip_check->port);
-    if(print!=NULL)
-      LOG("%-5d%-35s%-20s%-8d\n", list_id++, print->hostname, print->ip_addr, print->port);
-    iter = list_next(iter);
+    free(ip_check);
+    iter = list_remove(iter);
+  }
+}
+void delete_queued_messages(struct client_info *dead_client)
+{
+  struct list_elem *iter = list_begin(&(dead_client->blocked_list));
+  int list_id = 1;
+  while(iter!=list_end(&(dead_client->blocked_list)))
+  {
+    struct queued_msg *msg= list_entry(iter, struct queued_msg, elem);
+    free(msg);
+    iter = list_remove(iter);
   }
 }

@@ -8,7 +8,7 @@ void server_receive(int sockfd);
 void server_kill(int sockfd);
 void print_connected_client_list();
 
-void print_blocked_clients(char *ip);
+int print_blocked_clients(char *ip);
 
 void print_stats();
 
