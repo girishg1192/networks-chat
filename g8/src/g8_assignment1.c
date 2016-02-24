@@ -318,10 +318,10 @@ int parse_shell()
       else
       {
         char *ip = strtok_r(NULL, " ", &temp);
-        if(validate_ip(ip))
+        if(validate_ip(ip) && find_client_by_ip(ip) !=NULL)
         {
-          int ret = print_blocked_clients(ip);
-          print_success(ret, command);
+          print_success(1, command);
+          print_blocked_clients(ip);
         }
         else
           print_success(0, command);
