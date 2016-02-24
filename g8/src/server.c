@@ -251,10 +251,10 @@ void send_to_client(int sockfd, char *msg)
   char *tmp;
   char *ip_addr = strtok_r(msg, " ", &tmp);
   struct client_info *dest = find_client_by_ip(ip_addr);
+  LOG("msg from:%s, to:%s\n[msg]:%s\n", sender->ip_addr, ip_addr, msg);
   if(!check_if_blocked(sender, dest))
   {
     get_host_name(sockfd, hostname);
-    LOG("msg from:%s, to:%s\n[msg]:%s\n", sender->ip_addr, ip_addr, msg);
     if(dest!=NULL)
     {
       sprintf(relayed_message, "MSG msg from:%s\n[msg]:%s\n", hostname, tmp);
