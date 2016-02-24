@@ -1,3 +1,8 @@
+/*
+ * PintOS list implementation used for PA1
+ * Source used from URL : http://pintos-os.org/cgi-bin/gitweb.cgi?p=pintos-anon;a=tree;f=src/lib/kernel;h=1ec8d2b911dedb534512228107c6224906a4adfb;hb=HEAD
+ */
+
 #ifndef __LIB_KERNEL_LIST_H
 #define __LIB_KERNEL_LIST_H
 

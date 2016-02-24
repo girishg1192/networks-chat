@@ -171,8 +171,8 @@ void server_kill(int sockfd)
 {
   struct client_info *dead_client = find_client_by_fd(sockfd);
   list_remove(&dead_client->elem);
-  delete_queued_messages(dead_client);
-  delete_blocked_clients(dead_client);
+//  delete_queued_messages(dead_client);
+//  delete_blocked_clients(dead_client);
   free(dead_client);
   clear_fd(sockfd);
   close(sockfd);

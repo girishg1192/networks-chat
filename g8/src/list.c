@@ -1,3 +1,8 @@
+/*
+ * Using PintOS list implementation
+ * Source used from URL http://pintos-os.org/cgi-bin/gitweb.cgi?p=pintos-anon;a=tree;f=src/lib/kernel;h=1ec8d2b911dedb534512228107c6224906a4adfb;hb=HEAD
+ *
+ */
 #include "list.h"
 #include <stdio.h>
 #define ASSERT(CONDITION)                                       \
