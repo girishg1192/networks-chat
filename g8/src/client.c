@@ -37,7 +37,6 @@ int client_identify(int fd)
   char host_name[128];
   gethostname(host_name, 128);
   sprintf(command, "LOGIN %d %s", get_listening_port(), host_name);
-  printf("%s\n", command);
   return client_send(fd, command);
 }
 int client_send(int sockfd, char *buf)
@@ -67,14 +66,12 @@ void client_receive(int sockfd)
   memset(msg, 0, MAX_LENGTH);
   int ret, i=0;
   ret = recv(sockfd, msg, MAX_LENGTH, 0);
-  printf("%s::\n", msg);
   if(ret>0)
   {
     char *temp = NULL;
     char *command = strtok_r(msg, " ", &temp);
     if(!strcmp(command, "LIST"))
     {
-      printf("LIST = %s\n", temp);
       client_fill_list(temp);
     }
     else if(!strcmp(command, "MSG"))
@@ -108,7 +105,6 @@ void client_fill_list(char *id)
   {
     strcpy(argv[argc++], arg);
   }
-  printf("parsed %s %s %s\n", argv[0], argv[1], argv[2]);
   //TODO SEGFAULTS!!!!
   int set_port = strtol(argv[0], &end, 10);
   struct client_logged *add_client = malloc(sizeof(struct client_logged));
@@ -120,7 +116,6 @@ void client_fill_list(char *id)
   print_clients(add_client);
   list_insert_ordered(&connected_list, &add_client->elem, 
       (list_less_func *)&sort_port_client, NULL);
-  printf("Inserted\n");
 }
 void print_client_list()
 {
@@ -251,6 +246,7 @@ void client_send_file(char *ip, char *file_name)
   int read_bytes;
   int fd = open(file_name, O_RDONLY);
   send(filefd, file_name, sizeof(file_name), 0);
+  usleep(100*1000);
   while((read_bytes= read(fd, buffer, sizeof(buffer))) > 0)
   {
     send(filefd, buffer, read_bytes, 0);
@@ -265,11 +261,10 @@ void client_receive_file(int *sockfd_)
   struct sockaddr_storage client_addr;
   socklen_t size_address = sizeof(struct sockaddr_storage);
   char buffer[1024];
-  char file_name[10];
-  memset(file_name, 0, 10);
+  char file_name[64];
+  memset(file_name, 0, 64);
   int bytes_receive;
   recv(sockfd, file_name, sizeof(file_name), 0);
-  printf("opening file %s\n", file_name);
   int fd = open(file_name, O_TRUNC | O_WRONLY | O_CREAT);
   while((bytes_receive = recv(sockfd, buffer, sizeof(buffer), 0)) > 0)
   {
