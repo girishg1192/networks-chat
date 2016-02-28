@@ -169,16 +169,6 @@ int parse_shell()
     print_success(1, command);
     LOG("I, g8, have read and understood the course academic integrity policy.\n");
   }
-  else if(!strcmp("PORT", command))
-  {
-    print_success(1, command);
-    LOG("PORT:%d\n", get_listening_port());
-  }
-  else if(!strcmp("IP", command))
-  {
-    print_success(1, command);
-    get_ip();
-  }
   else if(!strcmp("EXIT", command))
   {
     return 1;
@@ -190,7 +180,7 @@ int parse_shell()
     if(temp!=NULL)
     {
       strcpy(arg_copy, temp);
-      for(arg = strtok_r(NULL, " ", &temp); arg; arg = strtok_r(NULL, " ", &temp))
+      for(arg = strtok_r(NULL, " ", &temp); arg && argc<4; arg = strtok_r(NULL, " ", &temp))
       {
         strcpy(argv[argc], arg);
         argc++;
@@ -221,7 +211,17 @@ int parse_shell()
     }
     else if(is_client_connected)
     {
-      if(!strcmp("SEND", command))
+      if(!strcmp("PORT", command))
+      {
+        print_success(1, command);
+        LOG("PORT:%d\n", get_listening_port());
+      }
+      else if(!strcmp("IP", command))
+      {
+        print_success(1, command);
+        get_ip();
+      }
+      else if(!strcmp("SEND", command))
       {
         if(!is_client_connected)
           print_success(0,command);
@@ -331,6 +331,16 @@ int parse_shell()
     {
       print_success(1, command);
       print_connected_client_list();
+    }
+    else if(!strcmp("PORT", command))
+    {
+      print_success(1, command);
+      LOG("PORT:%d\n", get_listening_port());
+    }
+    else if(!strcmp("IP", command))
+    {
+      print_success(1, command);
+      get_ip();
     }
     else
       print_success(0, command);
